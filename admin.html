@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - SupportHub</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Admin-specific styles */
+    .admin-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--header-height) - 64px);
+    }
+
+    .admin-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Users List */
+    .users-section {
+      width: 100%;
+      background: var(--background);
+      overflow-y: auto;
+      transition: var(--transition);
+    }
+
+    /* Hide users list when detail panel is open on mobile */
+    .users-section.hidden-mobile {
+      display: none;
+    }
+
+    .users-header {
+      padding: var(--space-md);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .users-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-item {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .user-item:hover {
+      background: var(--background);
+    }
+
+    .user-item.active {
+      background: rgba(79, 70, 229, 0.1);
+      border-left: 3px solid var(--primary);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-badge {
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+    }
+
+    /* Detail Panel */
+    .detail-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .detail-panel.hidden {
+      display: none;
+    }
+
+    /* Back button in detail header */
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-sm) var(--space-md);
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .back-btn:active {
+      transform: scale(0.98);
+    }
+
+    .detail-header {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .detail-user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .detail-user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .detail-user-text h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .detail-user-text p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Tabs in detail panel */
+    .detail-tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .detail-tab {
+      flex: 1;
+      padding: var(--space-md);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+      font-size: 0.875rem;
+    }
+
+    .detail-tab.active {
+      color: var(--primary);
+    }
+
+    .detail-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+
+    /* Tab content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-md);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Tickets table */
+    .ticket-card {
+      background: var(--background);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+      border: 1px solid var(--border);
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-sm);
+    }
+
+    .ticket-subject {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+      flex: 1;
+    }
+
+    .ticket-status {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: var(--space-sm);
+    }
+
+    .status-open {
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--primary);
+    }
+
+    .status-in-progress {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+    }
+
+    .status-resolved {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+
+    .status-closed {
+      background: rgba(107, 114, 128, 0.1);
+      color: var(--text-secondary);
+    }
+
+    .ticket-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+    }
+
+    .ticket-meta svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .ticket-actions {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Chat messages in detail */
+    .chat-message {
+      margin-bottom: var(--space-md);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-message-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xs);
+    }
+
+    .chat-message-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .chat-message.support .chat-message-avatar {
+      background: var(--secondary);
+    }
+
+    .chat-message-sender {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .chat-message-time {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    .chat-message-text {
+      background: var(--background);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      margin-left: 32px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-xl);
+      color: var(--text-secondary);
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: var(--space-md);
+      opacity: 0.3;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+      .admin-layout {
+        flex-direction: row;
+      }
+
+      .users-section {
+        width: 300px;
+        max-height: none;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="header-title">Admin Panel</h1>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="window.location.href='index.html'">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Admin Content -->
+    <main class="main-content" style="padding: 0;">
+      <div class="admin-container">
+        <div class="admin-layout">
+          <!-- Users List Section -->
+          <div class="users-section">
+            <div class="users-header">Users</div>
+            <div class="users-list" id="users-list">
+              <!-- Users will be populated by JavaScript -->
+            </div>
+          </div>
+
+          <!-- User Detail Panel -->
+          <div class="detail-panel hidden" id="detail-panel">
+            <div class="detail-header">
+              <button class="back-btn" onclick="goBackToUsers()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Users
+              </button>
+              <div class="detail-user-info">
+                <div class="detail-user-avatar" id="detail-avatar">JD</div>
+                <div class="detail-user-text">
+                  <h3 id="detail-name">John Doe</h3>
+                  <p id="detail-email">john@example.com</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="detail-tabs">
+              <button class="detail-tab active" onclick="switchDetailTab('tickets')">
+                Tickets
+              </button>
+              <button class="detail-tab" onclick="switchDetailTab('chat')">
+                Chat
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+              <!-- Tickets Tab -->
+              <div class="tab-pane active" id="tickets-pane">
+                <!-- Tickets will be populated by JavaScript -->
+              </div>
+
+              <!-- Chat Tab -->
+              <div class="tab-pane" id="chat-pane">
+                <!-- Chat messages will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a href="tickets.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+        </svg>
+        <span>Tickets</span>
+      </a>
+      <a href="chat.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+        </svg>
+        <span>Chat</span>
+      </a>
+      <a href="admin.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span>Admin</span>
+      </a>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="admin-data.js"></script>
+  <script>
+    let selectedUser = null;
+
+    // Get all tickets (dummy + localStorage)
+    function getAllTickets() {
+      const localTickets = JSON.parse(localStorage.getItem('tickets') || '[]');
+      // Merge dummy tickets with localStorage tickets
+      return [...DUMMY_TICKETS, ...localTickets];
+    }
+
+    // Get all users (dummy + localStorage)
+    function getAllUsers() {
+      const realUsers = JSON.parse(localStorage.getItem('realUsers') || '[]');
+      // Merge dummy users with real users
+      return [...DUMMY_USERS, ...realUsers];
+    }
+
+    // Render users list
+    function renderUsers() {
+      const usersList = document.getElementById('users-list');
+      usersList.innerHTML = '';
+
+      const allTickets = getAllTickets();
+      const allUsers = getAllUsers();
+
+      allUsers.forEach(user => {
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        userItem.onclick = () => selectUser(user.id);
+
+        // Count tickets for this user
+        const ticketCount = allTickets.filter(t => t.userId === user.id).length;
+
+        userItem.innerHTML = `
+          <div class="user-avatar">${user.initials}</div>
+          <div class="user-info">
+            <div class="user-name">${user.name}</div>
+            <div class="user-email">${user.email}</div>
+          </div>
+          <span class="user-badge badge-${user.status}">${ticketCount}</span>
+        `;
+
+        usersList.appendChild(userItem);
+      });
+    }
+
+    // Select user and show details
+    function selectUser(userId) {
+      const allUsers = getAllUsers();
+      selectedUser = allUsers.find(u => u.id === userId);
+      if (!selectedUser) return;
+
+      // Update active state
+      const userItems = document.querySelectorAll('.user-item');
+      userItems.forEach((item, index) => {
+        item.classList.toggle('active', allUsers[index].id === userId);
+      });
+
+      // Hide users list on mobile, show detail panel
+      document.querySelector('.users-section').classList.add('hidden-mobile');
+      document.getElementById('detail-panel').classList.remove('hidden');
+
+      // Update user info
+      document.getElementById('detail-avatar').textContent = selectedUser.initials;
+      document.getElementById('detail-name').textContent = selectedUser.name;
+      document.getElementById('detail-email').textContent = selectedUser.email;
+
+      // Render tickets and chat
+      renderTickets(userId);
+      renderChat(userId);
+    }
+
+    // Go back to users list
+    function goBackToUsers() {
+      document.querySelector('.users-section').classList.remove('hidden-mobile');
+      document.getElementById('detail-panel').classList.add('hidden');
+
+      // Clear active state
+      document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      selectedUser = null;
+    }
+
+    // Render tickets for selected user
+    function renderTickets(userId) {
+      const ticketsPane = document.getElementById('tickets-pane');
+      const allTickets = getAllTickets();
+      const userTickets = allTickets
+        .filter(t => t.userId === userId)
+        .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)); // Sort newest first
+
+      if (userTickets.length === 0) {
+        ticketsPane.innerHTML = '<div class="empty-state"><p>No tickets found</p></div>';
+        return;
+      }
+
+      ticketsPane.innerHTML = userTickets.map(ticket => `
+        <div class="ticket-card">
+          <div class="ticket-header">
+            <div class="ticket-subject">${ticket.subject}</div>
+            <span class="ticket-status status-${ticket.status}">${ticket.status.replace('-', ' ')}</span>
+          </div>
+          <div class="ticket-meta">
+            <span style="display: flex; align-items: center; gap: 4px;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              ${ticket.date}
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              ${ticket.category}
+            </span>
+          </div>
+          <div class="ticket-actions">
+            <button class="btn btn-primary btn-sm" onclick="alert('Viewing ticket: ${ticket.subject}')">
+              View Details
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render chat for selected user
+    function renderChat(userId) {
+      const chatPane = document.getElementById('chat-pane');
+      const userChats = DUMMY_CHAT_MESSAGES.filter(m => m.userId === userId);
+
+      if (userChats.length === 0) {
+        chatPane.innerHTML = '<div class="empty-state"><p>No chat history</p></div>';
+        return;
+      }
+
+      chatPane.innerHTML = userChats.map(msg => `
+        <div class="chat-message ${msg.sender}">
+          <div class="chat-message-header">
+            <div class="chat-message-avatar">${msg.sender === 'user' ? selectedUser.initials : 'AI'}</div>
+            <span class="chat-message-sender">${msg.sender === 'user' ? selectedUser.name : 'Support Bot'}</span>
+            <span class="chat-message-time">${msg.time}</span>
+          </div>
+          <div class="chat-message-text">${msg.message}</div>
+        </div>
+      `).join('');
+    }
+
+    // Switch tabs in detail panel
+    function switchDetailTab(tab) {
+      const tabs = document.querySelectorAll('.detail-tab');
+      const panes = document.querySelectorAll('.tab-pane');
+
+      tabs.forEach(t => {
+        t.classList.toggle('active', t.textContent.toLowerCase().includes(tab));
+      });
+
+      if (tab === 'tickets') {
+        document.getElementById('tickets-pane').classList.add('active');
+        document.getElementById('chat-pane').classList.remove('active');
+      } else {
+        document.getElementById('tickets-pane').classList.remove('active');
+        document.getElementById('chat-pane').classList.add('active');
+      }
+    }
+
+    // Initialize
+    renderUsers();
+  </script>
+</body>
+</html>
