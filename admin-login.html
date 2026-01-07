@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - SupportHub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="header-title">Admin Access</h1>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="window.location.href='login.html'">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="hero" style="padding: var(--space-xl) 0;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="64" height="64" style="margin: 0 auto var(--space-lg); display: block; color: var(--primary);">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <h2 class="hero-title" style="font-size: 1.5rem;">Admin Dashboard</h2>
+        <p class="hero-subtitle">Authorized access only</p>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error-message" class="alert alert-error hidden">
+        Invalid admin credentials. Please try again.
+      </div>
+
+      <!-- Admin Login Form -->
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="admin-email">Admin Email</label>
+          <input
+            type="email"
+            id="admin-email"
+            class="form-input"
+            placeholder="admin@supporthub.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-password">Admin Password</label>
+          <input
+            type="password"
+            id="admin-password"
+            class="form-input"
+            placeholder="Enter admin password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Access Admin Dashboard
+        </button>
+      </form>
+
+      <!-- Info Card -->
+      <div class="card mt-lg">
+        <h3 class="card-title">Demo Credentials</h3>
+        <p class="card-text" style="margin-bottom: var(--space-sm);">
+          <strong>Email:</strong> admin@supporthub.com<br>
+          <strong>Password:</strong> admin123
+        </p>
+        <p class="card-text" style="font-size: 0.75rem; color: var(--text-secondary);">
+          Note: In production, use secure authentication with proper backend validation.
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Check if already logged in as admin
+    if (isLoggedIn() && isAdmin()) {
+      window.location.href = 'admin.html';
+    }
+
+    async function handleAdminLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('admin-email').value;
+      const password = document.getElementById('admin-password').value;
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      const errorMsg = document.getElementById('error-message');
+
+      try {
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+
+        // Call admin login API
+        const data = await loginAdmin({ email, password });
+
+        // Store token and admin data
+        login(data.token, data.admin);
+
+        // Redirect to admin dashboard
+        window.location.href = 'admin.html';
+
+      } catch (error) {
+        console.error('Admin login error:', error);
+
+        // Show error message
+        errorMsg.textContent = error.message || 'Invalid admin credentials. Please try again.';
+        errorMsg.classList.remove('hidden');
+
+        // Hide error after 3 seconds
+        setTimeout(() => {
+          errorMsg.classList.add('hidden');
+        }, 3000);
+
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Access Admin Dashboard';
+      }
+    }
+  </script>
+</body>
+</html>

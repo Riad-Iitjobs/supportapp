@@ -3,18 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Submit Ticket - SupportHub</title>
+  <title>My Tickets - SupportHub</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .ticket-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .ticket-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .ticket-item:hover {
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-xs);
+    }
+
+    .ticket-subject {
+      font-weight: 600;
+      font-size: 0.875rem;
+      flex: 1;
+      margin-right: var(--space-sm);
+    }
+
+    .ticket-status-badge {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-open {
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--primary);
+    }
+
+    .status-in-progress {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+    }
+
+    .status-resolved {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+
+    .status-closed {
+      background: rgba(107, 114, 128, 0.1);
+      color: var(--text-secondary);
+    }
+
+    .ticket-meta {
+      display: flex;
+      gap: var(--space-md);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--background);
+      border-radius: var(--radius-lg);
+      max-width: 360px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: var(--space-lg);
+    }
+
+    .detail-row {
+      margin-bottom: var(--space-md);
+    }
+
+    .detail-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: var(--space-xs);
+    }
+
+    .detail-value {
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+  </style>
 </head>
 <body>
   <div class="mobile-container">
     <!-- Header -->
     <header class="header">
-      <h1 class="header-title">Support Ticket</h1>
+      <h1 class="header-title">My Tickets</h1>
       <div class="header-actions">
-        <button class="icon-btn" onclick="window.location.href='index.html'">
+        <button class="icon-btn" onclick="window.location.href='submit-ticket.html'" title="Submit New Ticket">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
         </button>
       </div>
@@ -22,109 +153,27 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Success Message -->
-      <div id="success-message" class="alert alert-success hidden">
-        Your ticket has been submitted successfully! We'll respond within 2 hours.
-      </div>
-
-      <!-- Info Card -->
-      <div class="card mb-lg">
-        <h3 class="card-title">Need Help?</h3>
-        <p class="card-text">Submit a support ticket and our team will get back to you as soon as possible.</p>
-      </div>
-
-      <!-- Ticket Form -->
-      <form id="ticket-form" onsubmit="handleTicketSubmit(event)">
-        <div class="form-group">
-          <label class="form-label" for="ticket-subject">Subject</label>
-          <input
-            type="text"
-            id="ticket-subject"
-            class="form-input"
-            placeholder="Brief description of your issue"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-category">Category</label>
-          <select id="ticket-category" class="form-select" required>
-            <option value="">Select a category</option>
-            <option value="technical">Technical Issue</option>
-            <option value="billing">Billing Question</option>
-            <option value="feature">Feature Request</option>
-            <option value="bug">Bug Report</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-priority">Priority</label>
-          <select id="ticket-priority" class="form-select" required>
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-description">Description</label>
-          <textarea
-            id="ticket-description"
-            class="form-textarea"
-            placeholder="Please provide detailed information about your issue..."
-            required
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-email">Contact Email</label>
-          <input
-            type="email"
-            id="ticket-email"
-            class="form-input"
-            placeholder="your@email.com"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-phone">Phone Number (Optional)</label>
-          <input
-            type="tel"
-            id="ticket-phone"
-            class="form-input"
-            placeholder="+1 (555) 123-4567"
-          >
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="ticket-attachment">Attachment (Optional)</label>
-          <input
-            type="file"
-            id="ticket-attachment"
-            class="form-input"
-            accept="image/*,.pdf,.doc,.docx"
-          >
-          <p class="text-secondary" style="font-size: 0.75rem; margin-top: var(--space-xs);">
-            Accepted formats: Images, PDF, Word documents
-          </p>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-block">
-          Submit Ticket
-        </button>
-
-        <button type="button" class="btn btn-secondary btn-block mt-sm" onclick="window.location.href='chat.html'">
-          Try Chat Support Instead
-        </button>
-      </form>
+      <div class="ticket-list" id="ticket-list"></div>
     </main>
+
+    <!-- Ticket Detail Modal -->
+    <div class="modal-overlay" id="ticket-modal" onclick="closeModal(event)">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Ticket Details</h3>
+          <button class="icon-btn" onclick="closeModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-      <a href="index.html" class="nav-item">
+      <a href="home.html" class="nav-item">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
         </svg>
@@ -136,80 +185,157 @@
         </svg>
         <span>Tickets</span>
       </a>
-      <a href="chat.html" class="nav-item">
+      <a href="account.html" class="nav-item">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
         </svg>
-        <span>Chat</span>
-      </a>
-      <a href="admin.html" class="nav-item">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-        <span>Admin</span>
+        <span>Account</span>
       </a>
     </nav>
   </div>
 
   <script src="app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="chat-widget.js"></script>
   <script>
-    // Pre-fill email if user is logged in
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.email) {
-      document.getElementById('ticket-email').value = user.email;
-    }
+    // Require authentication
+    requireAuth();
 
-    function handleTicketSubmit(event) {
-      event.preventDefault();
+    let userTickets = [];
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const now = new Date();
+    // Load tickets from API
+    async function loadTickets() {
+      const ticketList = document.getElementById('ticket-list');
 
-      // Format date as "YYYY-MM-DD HH:MM AM/PM"
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12;
-      const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-      const dateString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${displayHours}:${displayMinutes} ${ampm}`;
+      try {
+        // Show loading state
+        ticketList.innerHTML = '<div class="card text-center" style="padding: var(--space-xl);"><p>Loading tickets...</p></div>';
 
-      const ticket = {
-        id: Date.now(),
-        userId: user.userId || 1, // Default to user 1 if not set
-        subject: document.getElementById('ticket-subject').value,
-        category: document.getElementById('ticket-category').value,
-        priority: document.getElementById('ticket-priority').value,
-        description: document.getElementById('ticket-description').value,
-        email: document.getElementById('ticket-email').value,
-        phone: document.getElementById('ticket-phone').value,
-        status: 'open',
-        date: dateString,
-        createdAt: now.toISOString()
-      };
+        // Fetch tickets from API
+        const data = await getTickets();
+        userTickets = data.tickets || [];
 
-      // Store ticket in localStorage
-      const tickets = JSON.parse(localStorage.getItem('tickets') || '[]');
-      tickets.push(ticket);
-      localStorage.setItem('tickets', JSON.stringify(tickets));
+        // Sort by newest first
+        userTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      // Show success message
-      document.getElementById('success-message').classList.remove('hidden');
+        // Display tickets
+        displayTickets(userTickets);
 
-      // Reset form
-      document.getElementById('ticket-form').reset();
-      if (user.email) {
-        document.getElementById('ticket-email').value = user.email;
+        // Check if there's a selected ticket from dashboard
+        const selectedTicketId = localStorage.getItem('selectedTicket');
+        if (selectedTicketId) {
+          localStorage.removeItem('selectedTicket');
+          viewTicket(parseInt(selectedTicketId));
+        }
+
+      } catch (error) {
+        console.error('Error loading tickets:', error);
+        ticketList.innerHTML = '<div class="card text-center" style="padding: var(--space-xl);"><p style="color: var(--error);">Error loading tickets. Please try again.</p></div>';
       }
-
-      // Scroll to top to show success message
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        document.getElementById('success-message').classList.add('hidden');
-      }, 5000);
     }
+
+    function displayTickets(tickets) {
+      const ticketList = document.getElementById('ticket-list');
+
+      if (tickets.length === 0) {
+        ticketList.innerHTML = `
+          <div class="card text-center" style="padding: var(--space-xl);">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="margin: 0 auto var(--space-md); color: var(--text-secondary);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+            </svg>
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: var(--space-xs);">No tickets yet</h3>
+            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: var(--space-lg);">Submit your first support ticket to get started</p>
+            <button class="btn btn-primary btn-block" onclick="window.location.href='submit-ticket.html'">
+              Submit New Ticket
+            </button>
+          </div>
+        `;
+      } else {
+        const ticketsHTML = tickets.map(ticket => {
+          const date = new Date(ticket.created_at).toLocaleDateString();
+          return `
+            <div class="ticket-item" onclick="viewTicket(${ticket.id})">
+              <div class="ticket-header">
+                <div class="ticket-subject">${ticket.subject}</div>
+                <span class="ticket-status-badge status-${ticket.status}">${ticket.status.replace('-', ' ')}</span>
+              </div>
+              <div class="ticket-meta">
+                <span>${ticket.category}</span>
+                <span>${ticket.priority}</span>
+                <span>${date}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+        ticketList.innerHTML = ticketsHTML;
+      }
+    }
+
+    async function viewTicket(ticketId) {
+      try {
+        // Find ticket in local array first
+        let ticket = userTickets.find(t => t.id === ticketId);
+
+        // If not found, fetch from API
+        if (!ticket) {
+          const data = await getTicketById(ticketId);
+          ticket = data.ticket;
+        }
+
+        if (!ticket) return;
+
+        const date = new Date(ticket.created_at).toLocaleString();
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = `
+          <div class="detail-row">
+            <div class="detail-label">Subject</div>
+            <div class="detail-value">${ticket.subject}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+              <span class="ticket-status-badge status-${ticket.status}">${ticket.status.replace('-', ' ')}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Category</div>
+            <div class="detail-value">${ticket.category}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Priority</div>
+            <div class="detail-value">${ticket.priority}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Submitted</div>
+            <div class="detail-value">${date}</div>
+          </div>
+          ${ticket.phone ? `
+          <div class="detail-row">
+            <div class="detail-label">Phone</div>
+            <div class="detail-value">${ticket.phone}</div>
+          </div>
+          ` : ''}
+          <div class="detail-row">
+            <div class="detail-label">Description</div>
+            <div class="detail-value" style="white-space: pre-wrap;">${ticket.description || 'No description provided'}</div>
+          </div>
+        `;
+
+        document.getElementById('ticket-modal').classList.add('active');
+      } catch (error) {
+        console.error('Error loading ticket details:', error);
+        alert('Failed to load ticket details. Please try again.');
+      }
+    }
+
+    function closeModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('ticket-modal').classList.remove('active');
+    }
+
+    // Load tickets on page load
+    loadTickets();
   </script>
 </body>
 </html>
